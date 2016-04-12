@@ -1,0 +1,102 @@
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+<link href='https://fonts.googleapis.com/css?family=Open+Sans:400,600' rel='stylesheet' type='text/css'>
+<style>
+  body {
+    background: #333;
+    color: #fff;
+    padding-top: 50px;
+    font-family: 'Open Sans', sans-serif;
+  }
+  .btn {
+    border-radius: 0;
+  }
+  
+  #a0-onestep 
+    > div.a0-header.a0-top-header 
+    > div.a0-icon-container 
+    > div.a0-avatar > img {
+      display: none;
+  }
+</style>
+
+<script src="https://cdn.auth0.com/js/lock-8.1.min.js"></script>
+<script src="https://code.jquery.com/jquery-1.12.0.min.js"></script>
+
+<body>
+  <div class="container">
+    <div class="row">
+      <div class="col-xs-10 col-xs-offset-1">
+          <div>
+            <button id="listUsers" class="btn btn-primary btn-block">List Users</button>
+          </div>
+          <hr>
+          <div>
+            <button id="login" class="btn btn-default">Log in</button>
+            <button class="btn btn-danger" id="logOut">Log out</button>
+           </div>
+           <div class="">
+            <p id="info"></p>
+           </div>
+           <div id="users"></div>
+      </div>
+    </div>
+  </div>
+</body>
+
+<script>
+    var lock = new Auth0Lock('6nHfdow1PUp61RqjqRDy7KCaU0FR0djH', 'mfr-test.auth0.com');
+    // diag
+    console.log("Lock", lock);
+    
+    $(function() {
+      // login
+      $("#login").click(function() {
+        lock.show(function(err, profile, token) {
+          if (err) 
+            console.log("Error", err);
+          else {
+            localStorage.setItem("userToken", token);
+            localStorage.setItem("userProfile", JSON.stringify(profile));
+            // print user info
+            console.log(token, profile);
+            $("#info").text(profile.email + profile.nickname || "No user!");
+            $("#users").text("");
+          }
+        })
+      });
+        
+      // logout
+      $("#logOut").click(function() {
+        localStorage.removeItem('userToken');
+        localStorage.removeItem('userProfile');
+        window.location.href = "/";
+      })
+      
+      // list users
+      $("#listUsers").click(function() {
+        var users = "<ul>";
+        $.ajax({
+            url: "http://localhost:3000/api/users",
+            headers: {
+              'Authorization': 'Bearer ' + localStorage.getItem('userToken')
+            },
+        })           
+        .done(function (data) {
+          $.each(data, function(index, user) {
+            users += 
+              `<li>${user.name} ${user.info}</li>`
+          })
+          users += "</ul>";
+          console.log(data);
+          $("#users").html(users);
+        })
+        .fail(function (req, status) {
+          // diag
+          console.log(req, status);
+          $("#users").text
+            (`${req.status} ${req.statusText}`);
+        });
+      });
+    })
+
+</script>
